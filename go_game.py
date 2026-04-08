@@ -94,7 +94,7 @@ class GoGame:
         diff = self.board - self.previous_board
         if np.count_nonzero(diff) == 1:
             y, x = np.where(diff != 0)
-            return (int(x), int(y))
+            return (int(x[0]), int(y[0]))
         return None
 
     def switch_player(self):
