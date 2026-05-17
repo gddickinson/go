@@ -101,3 +101,7 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - The rules of Go are based on standard Japanese rules
 - Thanks to the PyQt5 team for the excellent GUI framework
 - Inspired by the rich history of Go spanning over 2,500 years
+
+
+---
+*Built with AI assistance from [Claude (Anthropic)](https://claude.com/).*
