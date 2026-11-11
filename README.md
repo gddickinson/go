@@ -2,13 +2,16 @@
 
 A simple implementation of the ancient board game Go (also known as Weiqi, Baduk) with a graphical user interface built using PyQt5 and a basic AI opponent.
 
-![Go Game Screenshot](https://raw.githubusercontent.com/username/go-game/main/screenshots/gameplay.png)
+**Play it in your browser: https://gddickinson.github.io/go/** (the same rules engine and AI, ported to JavaScript).
+
+![Go Game web version](docs/img/play.png)
 
 ## Features
 
 - Full implementation of Go game rules including:
   - Stone capture
-  - Ko rule prevention
+  - Ko rule prevention (simple ko)
+  - Suicide prevention
   - Territory scoring
   - Komi (6.5 points advantage for white)
 - Simple GUI with:
@@ -19,7 +22,7 @@ A simple implementation of the ancient board game Go (also known as Weiqi, Baduk
 
 ## Requirements
 
-- Python 3.6+
+- Python 3.9+
 - PyQt5
 - NumPy
 
@@ -27,8 +30,8 @@ A simple implementation of the ancient board game Go (also known as Weiqi, Baduk
 
 1. Clone the repository:
    ```
-   git clone https://github.com/username/go-game.git
-   cd go-game
+   git clone https://github.com/gddickinson/go.git
+   cd go
    ```
 
 2. Install the required dependencies:
@@ -64,14 +67,40 @@ This implementation follows standard Go rules:
 1. Players take turns placing stones on the intersections of the board
 2. Black plays first
 3. Stones that are completely surrounded by the opponent's stones are captured
-4. The Ko rule prevents immediate recapture of a single stone
-5. The game ends when both players pass consecutively
-6. Territory is counted based on surrounded empty intersections
-7. White receives a 6.5 point komi (compensation for black's first-move advantage)
+4. The Ko rule prevents immediate recapture of a single stone (a pass lifts the ban)
+5. Suicide (a move that leaves your own group with no liberties without capturing) is not allowed
+6. The game ends when both players pass consecutively
+7. Territory is counted based on surrounded empty intersections, plus prisoners (dead stones are not removed automatically)
+8. White receives a 6.5 point komi (compensation for black's first-move advantage)
+
+## Web version
+
+The `web/` folder holds a browser version built on the same code: `GoGame` and `SimpleGoAI` are ported line for line
+to JavaScript (`web/static/go_engine.js`, `go_ai.js`, and `py_random.js`, a port of Python's Mersenne Twister so a
+seeded AI picks the same moves), and a node test replays move sequences recorded from the Python (rule positions,
+random legal and illegal attempts, seeded AI games on 5x5 to 19x19) and requires identical results.
+
+Pages: **Play** (9x9, 13x13 or 19x19 against the AI as White, or two players; pass, ko and suicide feedback, live
+prisoners/territory/score, keyboard play), **Watch** (a seeded AI-vs-AI game recorded by Python), **Rules** (the
+rules as the code implements them, with example positions) and **About**.
+
+| Home | Play | Watch | Rules |
+|---|---|---|---|
+| ![home](docs/img/home.png) | ![play](docs/img/play.png) | ![watch](docs/img/watch.png) | ![rules](docs/img/rules.png) |
+
+```
+pip install -r requirements-web.txt
+python run_web.py                      # http://127.0.0.1:8160 (adds "Check with Python" on the Play page)
+python scripts/build_static.py         # static site in site/ (published to GitHub Pages by .github/workflows/pages.yml)
+python -m pytest -q                    # game, rule-regression, packaging and web tests (incl. the node engine test)
+python scripts/make_engine_fixtures.py # regenerate the Python-recorded fixtures after changing the rules
+```
+
+The repo also contains `go-web/`, an earlier standalone browser version that is independent of the Python code.
 
 ## AI Implementation
 
-The current AI implementation (`SimpleGoAI` class) makes random valid moves. This provides a basic opponent but isn't very challenging. Future improvements could include more sophisticated algorithms like Monte Carlo Tree Search.
+The current AI implementation (`SimpleGoAI` class) makes random valid (legal) moves; pass it `rng=random.Random(seed)` for a reproducible game. It never passes while it has a legal move, so a game against it ends only when it runs out of moves. This provides a basic opponent but isn't very challenging. Future improvements could include more sophisticated algorithms like Monte Carlo Tree Search.
 
 ## Future Enhancements
 
