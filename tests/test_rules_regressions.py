@@ -3,12 +3,14 @@
 Coordinates are (x, y); the board array is indexed board[y, x]. Black = 1, White = 2.
 Run: python -m pytest -q tests/test_rules_regressions.py
 """
+import random
 import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
+from go_ai import SimpleGoAI  # noqa: E402
 from go_game import GoGame  # noqa: E402
 
 
@@ -88,6 +90,36 @@ def test_capturing_move_is_not_suicide():
     game = ko_position()
     play(game, [(4, 4), (4, 3)])
     assert game.is_valid_move(2, 1) is True
+
+
+def test_ai_only_chooses_legal_moves():
+    for seed in range(20):
+        game = GoGame(5)
+        rng = random.Random(seed)
+        ai = SimpleGoAI(game, 1, rng=rng)
+        for _ in range(200):
+            if game.game_over:
+                break
+            ai.color = game.current_player
+            move = ai.make_move()
+            if move is None:
+                game.pass_turn()
+            else:
+                assert game.place_stone(*move), f"AI chose illegal move {move} (seed {seed})"
+
+
+def test_ai_seeded_is_reproducible():
+    def moves(seed):
+        game = GoGame(9)
+        ai = SimpleGoAI(game, 1, rng=random.Random(seed))
+        out = []
+        for _ in range(30):
+            ai.color = game.current_player
+            m = ai.make_move()
+            out.append(m)
+            game.place_stone(*m)
+        return out
+    assert moves(7) == moves(7) and moves(7) != moves(8)
 
 
 # --- passing --------------------------------------------------------------------------------------------------------

@@ -2,9 +2,13 @@ import random
 from go_game import GoGame
 
 class SimpleGoAI:
-    def __init__(self, game: GoGame, color: int):
+    """Picks a uniformly random legal move (random.choice over the legal points, scanned row by row).
+
+    `rng` is an optional random.Random for reproducible games; by default the global random module is used."""
+    def __init__(self, game: GoGame, color: int, rng=None):
         self.game = game
         self.color = color
+        self.rng = rng if rng is not None else random
 
     def make_move(self) -> tuple[int, int]:
         valid_moves = []
@@ -16,4 +20,4 @@ class SimpleGoAI:
         if not valid_moves:
             return None  # Pass if no valid moves
 
-        return random.choice(valid_moves)
+        return self.rng.choice(valid_moves)
