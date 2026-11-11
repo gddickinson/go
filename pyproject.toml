@@ -1,6 +1,6 @@
 [build-system]
 requires = ["setuptools>=68.0", "wheel"]
-build-backend = "setuptools.backends._legacy:_Backend"
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "go-game"
@@ -14,3 +14,6 @@ dependencies = [
 
 [project.scripts]
 go-game = "go_main:main"
+
+[tool.setuptools]
+py-modules = ["go_game", "go_ai", "go_gui", "go_main"]
