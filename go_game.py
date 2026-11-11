@@ -22,20 +22,17 @@ class GoGame:
         captured = self.remove_captured_stones(3 - self.current_player)
         self.captured_stones[self.current_player] += captured
 
-        if captured == 0:
-            self.remove_captured_stones(self.current_player)
-
-        if np.array_equal(self.board, self.previous_board):
-            self.board = self.previous_board
-            return False
-
-        self.ko_point = self.detect_ko()
+        # is_valid_move() has already rejected suicide, so the new stone's group always keeps a liberty.
+        self.ko_point = self.detect_ko(x, y)
         self.passes = 0
         self.switch_player()
         return True
 
     def pass_turn(self):
+        if self.game_over:
+            return
         self.passes += 1
+        self.ko_point = None  # the ko ban only applies to the move right after the capture
         if self.passes == 2:
             self.game_over = True
         else:
@@ -48,7 +45,32 @@ class GoGame:
             return False
         if (x, y) == self.ko_point:
             return False
+        if self.is_suicide(x, y, self.current_player):
+            return False
         return True
+
+    def is_suicide(self, x: int, y: int, player: int) -> bool:
+        """True if a stone of `player` at the empty point (x, y) would leave its own group with no liberties
+        without capturing anything (suicide is not allowed)."""
+        for nx, ny in self.get_neighbors(x, y):
+            color = self.board[ny, nx]
+            if color == 0:
+                return False
+            liberties = len(self.get_liberties(nx, ny))
+            if color == player and liberties > 1:
+                return False  # joins a group that keeps another liberty
+            if color != player and liberties == 1:
+                return False  # captures the neighbouring group, freeing a liberty
+        return True
+
+    def get_liberties(self, x: int, y: int) -> Set[Tuple[int, int]]:
+        """Empty points adjacent to the group containing the stone at (x, y)."""
+        liberties = set()
+        for sx, sy in self.get_connected_stones(x, y):
+            for nx, ny in self.get_neighbors(sx, sy):
+                if self.board[ny, nx] == 0:
+                    liberties.add((nx, ny))
+        return liberties
 
     def remove_captured_stones(self, player: int) -> int:
         captured = 0
@@ -88,14 +110,19 @@ class GoGame:
                 neighbors.append((nx, ny))
         return neighbors
 
-    def detect_ko(self) -> Tuple[int, int]:
+    def detect_ko(self, x: int, y: int) -> Tuple[int, int]:
+        """Simple ko after the stone just played at (x, y): if it captured exactly one stone, is a lone stone and has
+        exactly one liberty (the point it just captured), the opponent may not play there on the next move.
+        Returns that point, or None."""
         if self.previous_board is None:
             return None
-        diff = self.board - self.previous_board
-        if np.count_nonzero(diff) == 1:
-            y, x = np.where(diff != 0)
-            return (int(x[0]), int(y[0]))
-        return None
+        captured = np.argwhere((self.previous_board != 0) & (self.board == 0))
+        if len(captured) != 1:
+            return None
+        if len(self.get_connected_stones(x, y)) != 1 or len(self.get_liberties(x, y)) != 1:
+            return None
+        cy, cx = captured[0]
+        return (int(cx), int(cy))
 
     def switch_player(self):
         self.current_player = 3 - self.current_player
