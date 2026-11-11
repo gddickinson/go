@@ -1,0 +1,53 @@
+/* Go Game accents (lantern gold / ice cyan / plum) and page styles; the shared theme is style.css. */
+:root { --accent:#ffc857; --accent2:#ff6fa8; --accent3:#5fd4ff; --glow:rgba(255,200,87,.13); }
+button, .btn { color:#1a1200; } .seg button.on { color:#1a1200; }
+.mark { background:radial-gradient(circle at 35% 35%, #555, #000 70%); border-color:var(--accent); box-shadow:0 0 12px var(--accent); }
+
+/* board */
+.goban { display:block; width:100%; height:auto; }
+.goban .wood { fill:#2b1f0d; stroke:color-mix(in srgb, var(--accent) 45%, transparent); stroke-width:2; }
+.goban .ln { stroke:#c99a45; stroke-width:1.4; }
+.goban .star { fill:#e3b25a; }
+.goban .lab { fill:#b8955a; font:600 14px var(--mono); text-anchor:middle; }
+.goban .st.b { fill:#0a0a10; stroke:#000; stroke-width:1; filter:drop-shadow(0 0 2px rgba(255,200,87,.35)); }
+.goban .st.w { fill:#f3efe6; stroke:#b9b3a6; stroke-width:1; }
+.goban .last { fill:none; stroke-width:3; } .goban .last.on-b { stroke:var(--accent); } .goban .last.on-w { stroke:#d23f7a; }
+.goban .ko { fill:none; stroke:var(--accent2); stroke-width:3; }
+.goban .terr.t1 { fill:#0a0a10; stroke:var(--accent); stroke-width:1; } .goban .terr.t2 { fill:#f3efe6; stroke:#888; stroke-width:1; }
+.goban .cur { fill:none; stroke:var(--accent3); stroke-width:3; stroke-dasharray:5 4; }
+.board-wrap { border-radius:10px; cursor:pointer; touch-action:manipulation; box-shadow:0 0 30px var(--glow); }
+.board-wrap:focus-visible { outline:2px solid var(--accent3); outline-offset:3px; }
+
+/* play / watch */
+.play { display:grid; grid-template-columns:minmax(0,1fr) 320px; gap:20px; align-items:start; }
+.play .view { max-width:min(100%, calc(100vh - 190px)); width:100%; margin:0 auto; }
+.play .controls { margin:0; padding:14px 16px; }
+.bar { display:flex; flex-wrap:wrap; gap:6px; margin:8px 0; } .bar button { margin:0; }
+.status { margin:10px 0; font-size:15px; min-height:2.6em; }
+.dot { display:inline-block; width:12px; height:12px; border-radius:50%; vertical-align:-1px; border:1px solid #888; }
+.dot.b { background:#000; } .dot.w { background:#f3efe6; }
+.warnc { color:var(--warn); font-size:14px; }
+.readout { display:grid; grid-template-columns:1fr 1fr; gap:4px 12px; font-size:13px; margin-top:6px; }
+.readout div { display:flex; justify-content:space-between; border-bottom:1px dashed var(--line); }
+.readout span { color:var(--mute); } .readout b { font:600 13px var(--mono); }
+label.chk { display:flex; gap:8px; align-items:center; margin-top:12px; }
+.check { margin-top:8px; }
+.moves { max-height:160px; overflow-y:auto; line-height:1.8; } .moves span { white-space:nowrap; margin-right:6px; }
+.hint { font-size:12px; color:var(--mute); margin:8px 0 0; }
+
+/* home */
+.hero.split { display:grid; grid-template-columns:minmax(0,1.4fr) minmax(0,1fr); gap:28px; align-items:center; }
+.hero-board { max-width:340px; width:100%; justify-self:center; }
+.flow { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:10px; counter-reset:f; }
+.flow div { border:1px solid var(--line); border-radius:6px; padding:12px 14px; background:rgba(12,16,32,.8); font-size:14px; }
+.flow div::before { counter-increment:f; content:counter(f); font:600 12px var(--mono); color:var(--bg); background:var(--accent);
+  border-radius:50%; width:20px; height:20px; display:inline-grid; place-items:center; margin-right:8px; }
+
+/* rules */
+.rules li { margin:6px 0; max-width:80ch; }
+.exs .ex svg { margin:10px 0 4px; max-width:240px; }
+
+@media (max-width:760px) {
+  .play, .hero.split { grid-template-columns:minmax(0,1fr); }
+  .hero-board { max-width:260px; }
+}
