@@ -14,6 +14,8 @@ const EXAMPLES = [
     t: 'Black at the top edge between the two stones would leave the black group with no liberties without capturing anything, so the move is refused (for one stone or many).' },
   { h: 'Territory', size: 5, moves: [[2, 0], [3, 0], [2, 1], [3, 1], [2, 2], [3, 2], [2, 3], [3, 3], [2, 4], [3, 4], P, P],
     t: 'After two passes the game ends. Empty regions touching only one colour are that colour\'s territory; regions touching both (or neither) are neutral. Black 10, White 5 + 6.5 komi = 11.5.' },
+  { h: 'Dead stones', size: 5, moves: [[2, 0], [3, 0], [2, 1], [3, 1], [2, 2], [3, 2], [2, 3], [3, 3], [2, 4], [3, 4], [0, 2], [0, 0], P, P], dead: [[0, 0]],
+    t: 'The white stone in Black\'s area is marked dead: it is taken off for counting and becomes a prisoner. Black 9 territory + 1 prisoner = 10; White 5 + 6.5 = 11.5. Unmarked, Black\'s area would touch White and count as neutral.' },
 ];
 
 route('rules', async () => {
@@ -22,8 +24,9 @@ route('rules', async () => {
     const g = new GoGame(ex.size);
     let last = null;
     for (const m of ex.moves) { apply(g, m); if (m) last = m; }
+    for (const [x, y] of ex.dead || []) g.toggleDead(x, y);
     const terr = g.gameOver ? g.territoryMap().owner : null;
-    return `<div class="card ex"><b>${esc(ex.h)}</b>${boardSvg(ex.size, g.board, { last: g.gameOver ? null : last, ko: g.koPoint, owner: terr, labels: false, title: ex.h + ' example' })}
+    return `<div class="card ex"><b>${esc(ex.h)}</b>${boardSvg(ex.size, g.board, { last: g.gameOver ? null : last, ko: g.koPoint, owner: terr, dead: g.deadStones, labels: false, title: ex.h + ' example' })}
       <span>${esc(ex.t)}</span></div>`;
   }).join('');
   app().innerHTML = `
@@ -38,9 +41,10 @@ route('rules', async () => {
     <li><b>Simple ko:</b> if a lone stone captures exactly one stone and is left with a single liberty, the opponent may not
       recapture on that point on the next move. A pass clears the ban.</li>
     <li>Two consecutive passes end the game; afterwards no moves are accepted.</li>
-    <li><b>Scoring</b> (${esc(info.scoring)}): each empty region bordered only by one colour counts for that colour, plus that
-      player's prisoners; White adds ${info.komi} komi. Dead stones are not removed before counting, so play out or capture
-      them first.</li>
+    <li><b>Scoring</b> is territory scoring (${esc(info.scoring)}, as in Japanese rules): each empty region bordered only by
+      one colour counts for that colour, plus that player's prisoners; White adds ${info.komi} komi. After the game ends,
+      players click groups to mark them dead: dead stones are taken off for counting, become the opponent's prisoners, and
+      their points count as territory for whoever surrounds them.</li>
     <li>Board sizes here: ${info.board_sizes.map(n => `${n}×${n}`).join(', ')} (the desktop app uses ${info.desktop_board_size}×${info.desktop_board_size};
       <code>GoGame(board_size)</code> accepts any size).</li>
   </ol>

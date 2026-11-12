@@ -2,7 +2,8 @@
 // Coordinates are (x, y); the board is a flat Int8Array indexed y * size + x with 0 empty, 1 black, 2 white.
 // Rules as the Python implements them: captures by liberties, simple ko (a lone stone that captured exactly one stone
 // and has one liberty bans the immediate retake; a pass clears it), no suicide, two passes end the game, and
-// Japanese-style scoring: empty regions bordered by one colour + prisoners, plus 6.5 komi for White.
+// territory scoring (Japanese style): empty regions bordered by one colour + prisoners, plus 6.5 komi for White; after
+// the game, groups marked dead are taken off for scoring and count as the opponent's prisoners and territory.
 // go_engine.test.mjs replays move sequences recorded from the Python and requires identical results.
 
 export const KOMI = 6.5;
@@ -18,6 +19,7 @@ export class GoGame {
     this.gameOver = false;
     this.passes = 0;
     this.capturedStones = { 1: 0, 2: 0 };
+    this.deadStones = new Set();  // point indices marked dead after the game ends (toggleDead)
   }
 
   at(x, y) { return this.board[y * this.boardSize + x]; }
@@ -140,21 +142,38 @@ export class GoGame {
 
   switchPlayer() { this.currentPlayer = 3 - this.currentPlayer; }
 
+  // After the game has ended: mark (or unmark) the whole group at (x, y) as dead. False if not over or no stone.
+  toggleDead(x, y) {
+    if (!this.gameOver || !(x >= 0 && x < this.boardSize && y >= 0 && y < this.boardSize) || this.at(x, y) === 0) return false;
+    const group = this.getConnectedStones(x, y);
+    const all = [...group].every(k => this.deadStones.has(k));
+    for (const k of group) all ? this.deadStones.delete(k) : this.deadStones.add(k);
+    return true;
+  }
+
+  scoringBoard() {
+    const b = this.board.slice();
+    for (const k of this.deadStones) b[k] = 0;
+    return b;
+  }
+
   getScore() {
-    const t = this.countTerritory();
-    return [this.capturedStones[1] + t[1], this.capturedStones[2] + t[2] + KOMI];
+    const t = this.countTerritory(), dead = { 1: 0, 2: 0 };
+    for (const k of this.deadStones) dead[this.board[k]] += 1;
+    return [this.capturedStones[1] + dead[2] + t[1], this.capturedStones[2] + dead[1] + t[2] + KOMI];
   }
 
   countTerritory() { return this.territoryMap().counts; }
 
-  // Owner (0 neutral, 1, 2) of every empty point, as get_score() counts it; stones are -1. Also returns the counts.
+  // Owner (0 neutral, 1, 2) of every empty point of the scored board (dead stones removed), as get_score() counts
+  // it; live stones are -1. Also returns the counts.
   territoryMap() {
-    const n = this.boardSize, owner = new Int8Array(n * n).fill(-1), counts = { 0: 0, 1: 0, 2: 0 };
+    const n = this.boardSize, board = this.scoringBoard(), owner = new Int8Array(n * n).fill(-1), counts = { 0: 0, 1: 0, 2: 0 };
     for (let y = 0; y < n; y++) {
       for (let x = 0; x < n; x++) {
-        if (owner[y * n + x] !== -1 || this.at(x, y) !== 0) continue;
-        const region = this.getConnectedEmpty(x, y);
-        const who = this.determineTerritoryOwner(region);
+        if (owner[y * n + x] !== -1 || board[y * n + x] !== 0) continue;
+        const region = this.getConnectedEmpty(x, y, board);
+        const who = this.determineTerritoryOwner(region, board);
         for (const k of region) owner[k] = who;
         counts[who] += region.size;
       }
@@ -162,25 +181,25 @@ export class GoGame {
     return { owner, counts };
   }
 
-  getConnectedEmpty(x, y) {
+  getConnectedEmpty(x, y, board = this.board) {
     const n = this.boardSize, visited = new Set(), stack = [[x, y]];
     while (stack.length) {
       const [cx, cy] = stack.pop();
       const k = cy * n + cx;
       if (visited.has(k)) continue;
       visited.add(k);
-      for (const [nx, ny] of this.getNeighbors(cx, cy)) if (this.at(nx, ny) === 0) stack.push([nx, ny]);
+      for (const [nx, ny] of this.getNeighbors(cx, cy)) if (board[ny * n + nx] === 0) stack.push([nx, ny]);
     }
     return visited;
   }
 
-  determineTerritoryOwner(region) {
+  determineTerritoryOwner(region, board = this.board) {
     let black = false, white = false;
     const n = this.boardSize;
     for (const k of region) {
       const x = k % n;
       for (const [nx, ny] of this.getNeighbors(x, (k - x) / n)) {
-        const c = this.at(nx, ny);
+        const c = board[ny * n + nx];
         if (c === 1) black = true; else if (c === 2) white = true;
       }
     }

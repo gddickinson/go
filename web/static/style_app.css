@@ -11,6 +11,7 @@ button, .btn { color:#1a1200; } .seg button.on { color:#1a1200; }
 .goban .lab { fill:#b8955a; font:600 14px var(--mono); text-anchor:middle; }
 .goban .st.b { fill:#0a0a10; stroke:#000; stroke-width:1; filter:drop-shadow(0 0 2px rgba(255,200,87,.35)); }
 .goban .st.w { fill:#f3efe6; stroke:#b9b3a6; stroke-width:1; }
+.goban .st.dead { opacity:.35; } .goban .x { stroke:#ff4d6d; stroke-width:4; stroke-linecap:round; }
 .goban .last { fill:none; stroke-width:3; } .goban .last.on-b { stroke:var(--accent); } .goban .last.on-w { stroke:#d23f7a; }
 .goban .ko { fill:none; stroke:var(--accent2); stroke-width:3; }
 .goban .terr.t1 { fill:#0a0a10; stroke:var(--accent); stroke-width:1; } .goban .terr.t2 { fill:#f3efe6; stroke:#888; stroke-width:1; }

@@ -23,6 +23,8 @@ function checkFinal(g, f, label) {
   ok(g.capturedStones[1] === f.captured['1'] && g.capturedStones[2] === f.captured['2'], `${label}: captures`);
   const t = g.countTerritory();
   ok([0, 1, 2].every(k => t[k] === f.territory[String(k)]), `${label}: territory ${JSON.stringify(t)}`);
+  const dead = [...g.deadStones].map(k => [k % g.boardSize, Math.floor(k / g.boardSize)]).sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+  ok(same(dead, f.dead), `${label}: dead stones`);
   const [b, w] = g.getScore();
   ok(close(b, f.score['1']) && close(w, f.score['2']), `${label}: score ${b}-${w} vs ${f.score['1']}-${f.score['2']}`);
 }
@@ -40,6 +42,7 @@ for (const c of fx.cases) {
     ok(same(g.koPoint, s.ko_point), `${c.label} move ${i}: ko ${g.koPoint} vs ${s.ko_point}`);
     ok(g.currentPlayer === s.current_player, `${c.label} move ${i}: player`);
   });
+  (c.dead || []).forEach(([x, y], i) => ok(g.toggleDead(x, y) === c.dead_results[i], `${c.label}: toggle dead ${i}`));
   checkFinal(g, c.final, c.label);
 }
 

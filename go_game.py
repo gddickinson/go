@@ -11,6 +11,7 @@ class GoGame:
         self.game_over = False
         self.passes = 0
         self.captured_stones = {1: 0, 2: 0}
+        self.dead_stones: Set[Tuple[int, int]] = set()  # marked after the game ends, see toggle_dead()
 
     def place_stone(self, x: int, y: int) -> bool:
         if self.game_over or not self.is_valid_move(x, y):
@@ -139,27 +140,53 @@ class GoGame:
     def switch_player(self):
         self.current_player = 3 - self.current_player
 
+    def toggle_dead(self, x: int, y: int) -> bool:
+        """After the game has ended, mark (or unmark) the whole group at (x, y) as dead before scoring.
+        Returns False if the game is not over or (x, y) holds no stone."""
+        if not self.game_over or not (0 <= x < self.board_size and 0 <= y < self.board_size) or self.board[y, x] == 0:
+            return False
+        group = self.get_connected_stones(x, y)
+        if group <= self.dead_stones:
+            self.dead_stones -= group
+        else:
+            self.dead_stones |= group
+        return True
+
+    def scoring_board(self) -> np.ndarray:
+        """The board with dead stones taken off (the position that is scored)."""
+        board = self.board.copy()
+        for x, y in self.dead_stones:
+            board[y, x] = 0
+        return board
+
     def get_score(self) -> Tuple[float, float]:
+        """Territory scoring (as in Japanese rules): territory + prisoners, where stones marked dead count as
+        prisoners for the opponent and their points as the opponent's territory; White adds 6.5 komi."""
         territory = self.count_territory()
-        black_score = self.captured_stones[1] + territory[1]
-        white_score = self.captured_stones[2] + territory[2] + 6.5  # 6.5 komi
+        dead = {1: 0, 2: 0}
+        for x, y in self.dead_stones:
+            dead[int(self.board[y, x])] += 1
+        black_score = self.captured_stones[1] + dead[2] + territory[1]
+        white_score = self.captured_stones[2] + dead[1] + territory[2] + 6.5  # 6.5 komi
         return black_score, white_score
 
     def count_territory(self) -> Dict[int, int]:
         territory = {0: 0, 1: 0, 2: 0}
         visited = set()
+        board = self.scoring_board()
 
         for y in range(self.board_size):
             for x in range(self.board_size):
-                if (x, y) not in visited and self.board[y, x] == 0:
-                    region = self.get_connected_empty(x, y)
+                if (x, y) not in visited and board[y, x] == 0:
+                    region = self.get_connected_empty(x, y, board)
                     visited.update(region)
-                    owner = self.determine_territory_owner(region)
+                    owner = self.determine_territory_owner(region, board)
                     territory[owner] += len(region)
 
         return territory
 
-    def get_connected_empty(self, x: int, y: int) -> Set[Tuple[int, int]]:
+    def get_connected_empty(self, x: int, y: int, board: np.ndarray = None) -> Set[Tuple[int, int]]:
+        board = self.board if board is None else board
         visited = set()
         stack = [(x, y)]
         while stack:
@@ -168,19 +195,20 @@ class GoGame:
                 visited.add(current)
                 cx, cy = current
                 for nx, ny in self.get_neighbors(cx, cy):
-                    if self.board[ny, nx] == 0:
+                    if board[ny, nx] == 0:
                         stack.append((nx, ny))
         return visited
 
-    def determine_territory_owner(self, region: Set[Tuple[int, int]]) -> int:
+    def determine_territory_owner(self, region: Set[Tuple[int, int]], board: np.ndarray = None) -> int:
+        board = self.board if board is None else board
         black_adjacent = False
         white_adjacent = False
 
         for x, y in region:
             for nx, ny in self.get_neighbors(x, y):
-                if self.board[ny, nx] == 1:
+                if board[ny, nx] == 1:
                     black_adjacent = True
-                elif self.board[ny, nx] == 2:
+                elif board[ny, nx] == 2:
                     white_adjacent = True
 
         if black_adjacent and not white_adjacent:

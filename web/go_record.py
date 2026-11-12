@@ -35,6 +35,7 @@ def state(game: GoGame) -> dict:
         "captured": {"1": int(game.captured_stones[1]), "2": int(game.captured_stones[2])},
         "territory": {str(k): int(v) for k, v in territory.items()},
         "score": {"1": float(black), "2": float(white)},
+        "dead": sorted([int(x), int(y)] for x, y in game.dead_stones),
     }
 
 
@@ -46,8 +47,9 @@ def apply(game: GoGame, move) -> bool:
     return bool(game.place_stone(int(move[0]), int(move[1])))
 
 
-def replay(size: int, moves, boards: bool = False) -> dict:
-    """Replay a move list through GoGame. Returns per-move results (and boards if asked) plus the final state."""
+def replay(size: int, moves, boards: bool = False, dead=()) -> dict:
+    """Replay a move list through GoGame, then toggle dead groups at the points in `dead` (end-of-game marking).
+    Returns per-move results (and boards if asked), per-toggle results and the final state."""
     game = GoGame(size)
     results, steps = [], []
     for m in moves:
@@ -55,7 +57,8 @@ def replay(size: int, moves, boards: bool = False) -> dict:
         if boards:
             steps.append({"board": encode(game.board), "ko_point": list(game.ko_point) if game.ko_point else None,
                           "current_player": int(game.current_player)})
-    out = {"results": results, "final": state(game)}
+    dead_results = [bool(game.toggle_dead(int(x), int(y))) for x, y in dead]
+    out = {"results": results, "dead_results": dead_results, "final": state(game)}
     if boards:
         out["steps"] = steps
     return out

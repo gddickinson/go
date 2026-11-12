@@ -170,3 +170,44 @@ def test_ai_vs_ai_games_end_with_two_passes():
             move = ais[game.current_player].make_move()
             game.pass_turn() if move is None else game.place_stone(*move)
         assert game.game_over, f"seed {seed}: game did not end"
+
+
+# --- dead stones at the end of the game -----------------------------------------------------------------------------
+def dead_stone_game():
+    """5x5: Black wall on column x=2, White wall on x=3, plus a lone white stone at (0,0) inside Black's area."""
+    game = GoGame(5)
+    play(game, [(2, 0), (3, 0), (2, 1), (3, 1), (2, 2), (3, 2), (2, 3), (3, 3), (2, 4), (3, 4), (0, 2), (0, 0)])
+    game.pass_turn()
+    game.pass_turn()
+    return game
+
+
+def test_dead_stones_can_only_be_marked_after_the_game():
+    game = GoGame(5)
+    play(game, [(2, 2)])
+    assert game.toggle_dead(2, 2) is False and game.dead_stones == set()
+    assert game.toggle_dead(0, 0) is False
+
+
+def test_marking_a_dead_group_scores_it_as_captured():
+    game = dead_stone_game()
+    assert game.game_over
+    # Without marking, Black's area touches the white stone: all of it is neutral.
+    assert game.count_territory() == {0: 8, 1: 0, 2: 5}
+    assert game.get_score() == (0, 11.5)
+    assert game.toggle_dead(0, 0) is True and game.dead_stones == {(0, 0)}
+    # Territory scoring: the dead stone's point becomes Black territory and the stone a Black prisoner.
+    assert game.count_territory() == {0: 0, 1: 9, 2: 5}
+    assert game.get_score() == (10, 11.5)
+    assert game.board[0, 0] == 2                        # the board itself is unchanged
+    assert game.toggle_dead(0, 0) is True and game.dead_stones == set()
+    assert game.get_score() == (0, 11.5)
+
+
+def test_toggle_dead_marks_the_whole_group():
+    game = GoGame(5)
+    play(game, [(0, 0), (4, 4), (1, 0), (4, 3)])
+    game.pass_turn()
+    game.pass_turn()
+    game.toggle_dead(1, 0)
+    assert game.dead_stones == {(0, 0), (1, 0)}

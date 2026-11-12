@@ -13,9 +13,10 @@ route('about', () => {
   <p>The game here is the Python code ported to JavaScript (<code>go_engine.js</code>, <code>go_ai.js</code>,
   <code>py_random.js</code>), tested move for move against the Python. The demo game on the Watch page was recorded by the
   Python code itself. ${isStatic() ? 'This static site needs no server; only "Check with Python" needs the local app.' : ''}</p>
-  <div class="callout">While building this site, four bugs in the Python were fixed: the ko rule was never enforced,
-  multi-stone suicide was allowed (one-stone suicide was not), the AI could pick a suicide point (stalling the desktop game),
-  and <code>pyproject.toml</code> named a build backend that does not exist. See the README and SESSION_LOG.md.</div>
+  <div class="callout">While building this site, bugs in the Python were fixed: the ko rule was never enforced,
+  multi-stone suicide was allowed (one-stone suicide was not), the AI could pick a suicide point (stalling the desktop game)
+  and never passed, scoring could not remove dead stones, and <code>pyproject.toml</code> named a build backend that does
+  not exist. See the README and SESSION_LOG.md.</div>
   <p>The AI plays a random legal move that does not fill its own eye and passes when none is left, so when you pass
   after it does, the game ends and is scored.</p>
 

@@ -6,7 +6,8 @@ const STAR = { 9: [2, 4, 6], 13: [3, 6, 9], 19: [3, 9, 15] };
 const COLS = 'ABCDEFGHJKLMNOPQRST';   // Go column letters skip I
 export const pointName = (x, y, n) => n <= 19 ? `${COLS[x]}${n - y}` : `(${x},${y})`;
 
-// opts: { last:[x,y], ko:[x,y], owner:Int8Array (territory: 0/1/2, -1 stone), cursor:[x,y], labels:bool, title }
+// opts: { last:[x,y], ko:[x,y], owner:Int8Array (territory: 0/1/2, -1 stone), dead:Set of indices, cursor:[x,y],
+//         labels:bool, title }
 export function boardSvg(n, board, opts = {}) {
   const cell = 40, pad = opts.labels === false ? 26 : 50, size = pad * 2 + cell * (n - 1);
   const P = i => pad + i * cell;
@@ -32,7 +33,9 @@ export function boardSvg(n, board, opts = {}) {
     const v = board[k];
     if (!v) continue;
     const x = k % n, y = (k - x) / n;
-    s += `<circle class="st ${v === 1 ? 'b' : 'w'}" cx="${P(x)}" cy="${P(y)}" r="${r}"/>`;
+    const dead = opts.dead && opts.dead.has(k);
+    s += `<circle class="st ${v === 1 ? 'b' : 'w'}${dead ? ' dead' : ''}" cx="${P(x)}" cy="${P(y)}" r="${r}"/>`;
+    if (dead) { const d = r * 0.5; s += `<path class="x" d="M${P(x) - d} ${P(y) - d}L${P(x) + d} ${P(y) + d}M${P(x) - d} ${P(y) + d}L${P(x) + d} ${P(y) - d}"/>`; }
   }
   if (opts.last) {
     const [x, y] = opts.last, v = board[y * n + x];

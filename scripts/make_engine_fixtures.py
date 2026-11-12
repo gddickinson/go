@@ -1,7 +1,7 @@
 """Write tests/fixtures/go_engine_fixtures.json: move sequences replayed through the repo's Python GoGame and
 SimpleGoAI, which web/static/go_engine.test.mjs requires the JS port to reproduce exactly.
 
-Cases: hand-made rule positions (capture, ko, suicide, passing, territory), random move attempts (legal and
+Cases: hand-made rule positions (capture, ko, suicide, passing, territory, dead-stone marking), random move attempts (legal and
 illegal, every board recorded), seeded AI-vs-AI games (the JS AI must choose the same moves) and raw
 Mersenne Twister outputs of random.Random(seed).
 Run: python scripts/make_engine_fixtures.py   (tests/test_web.py checks the file is current)
@@ -33,6 +33,10 @@ SCENARIOS = [
     ("two passes end the game", 9, [(2, 2), (6, 6), P, P, (4, 4), P]),
     ("territory: walls", 5, [(2, 0), (3, 0), (2, 1), (3, 1), (2, 2), (3, 2), (2, 3), (3, 3), (2, 4), (3, 4), P, P]),
     ("territory: neutral region", 5, [(0, 2), (4, 2), (1, 2), (3, 2), P, P]),
+    ("dead stone marked and unmarked", 5,
+     [(2, 0), (3, 0), (2, 1), (3, 1), (2, 2), (3, 2), (2, 3), (3, 3), (2, 4), (3, 4), (0, 2), (0, 0), P, P],
+     [(0, 0), (0, 0), (0, 0), (1, 1), (4, 4)]),
+    ("dead marking refused before the end", 5, [(2, 2), (1, 1)], [(2, 2), (0, 0)]),
 ]
 
 
@@ -55,14 +59,22 @@ BELOW = [1, 2, 3, 7, 80, 81, 360, 361]
 
 def build() -> dict:
     cases = []
-    for label, size, moves in SCENARIOS:
+    for label, size, moves, *dead in SCENARIOS:
         mv = [list(m) if m else None for m in moves]
-        cases.append({"label": label, "size": size, "moves": mv, **replay(size, mv, boards=True)})
+        dead = [list(p) for p in dead[0]] if dead else []
+        cases.append({"label": label, "size": size, "moves": mv, "dead": dead, **replay(size, mv, boards=True, dead=dead)})
     for size, seed, n in [(5, 1, 250), (7, 2, 300), (9, 3, 400), (13, 4, 200)]:
         mv = random_attempts(size, seed, n)
         cases.append({"label": f"random attempts {size}x{size} seed {seed}", "size": size, "moves": mv,
                       **replay(size, mv, boards=True)})
     games = [ai_game(size, seed, n) for size, seed, n in AI_GAMES]
+    for g in games[2:5]:  # finished AI games with a few groups marked dead (points drawn by Python's random)
+        stones = [[k % g["size"], k // g["size"]] for k, v in enumerate(g["final"]["board"]) if v != "0"]
+        rng = random.Random(g["seed"] + 99)
+        dead = rng.sample(stones, 3)
+        label = f"AI game {g['size']}x{g['size']} seed {g['seed']} with dead groups"
+        cases.append({"label": label, "size": g["size"], "moves": g["moves"], "dead": dead,
+                      **replay(g["size"], g["moves"], boards=True, dead=dead)})
     prng = []
     for s in PRNG_SEEDS:
         r = random.Random(s)

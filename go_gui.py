@@ -31,20 +31,30 @@ class GoBoard(QWidget):
         for y in range(self.game.board_size):
             for x in range(self.game.board_size):
                 if self.game.board[y, x] != 0:
-                    if self.game.board[y, x] == 1:
-                        painter.setBrush(Qt.black)
-                    else:
-                        painter.setBrush(Qt.white)
-                    painter.drawEllipse(QPoint(self.margin + x * self.cell_size,
-                                               self.margin + y * self.cell_size),
-                                        self.cell_size // 2 - 2,
-                                        self.cell_size // 2 - 2)
+                    dead = (x, y) in self.game.dead_stones
+                    color = QColor(Qt.black) if self.game.board[y, x] == 1 else QColor(Qt.white)
+                    if dead:
+                        color.setAlpha(90)  # dead stones are drawn faded with a red cross
+                    painter.setPen(QPen(Qt.black))
+                    painter.setBrush(color)
+                    cx, cy = self.margin + x * self.cell_size, self.margin + y * self.cell_size
+                    painter.drawEllipse(QPoint(cx, cy), self.cell_size // 2 - 2, self.cell_size // 2 - 2)
+                    if dead:
+                        d = self.cell_size // 4
+                        painter.setPen(QPen(QColor(200, 30, 30), 2))
+                        painter.drawLine(cx - d, cy - d, cx + d, cy + d)
+                        painter.drawLine(cx - d, cy + d, cx + d, cy - d)
 
     def mousePressEvent(self, event):
         x = round((event.x() - self.margin) / self.cell_size)
         y = round((event.y() - self.margin) / self.cell_size)
         if 0 <= x < self.game.board_size and 0 <= y < self.game.board_size:
-            if self.game.place_stone(x, y):
+            if self.game.game_over:
+                # End-of-game phase: click a group to mark it dead (or alive again); the score updates.
+                if self.game.toggle_dead(x, y):
+                    self.update()
+                    self.update_status_func()
+            elif self.game.place_stone(x, y):
                 self.update()
                 self.update_status_func()
                 self.ai_move_func()
@@ -75,7 +85,8 @@ class GoWindow(QMainWindow):
     def update_status(self):
         if self.game.game_over:
             black_score, white_score = self.game.get_score()
-            status = f"Game Over. Black: {black_score}, White: {white_score}"
+            status = (f"Game Over. Black: {black_score}, White: {white_score} (territory + prisoners, komi 6.5). "
+                      "Click groups to mark them dead.")
         else:
             current_player = "Black" if self.game.current_player == 1 else "White"
             status = f"{current_player}'s turn"

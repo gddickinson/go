@@ -76,6 +76,13 @@ def test_replay_ko_and_suicide():
     assert r["final"]["score"] == {"1": 80.0, "2": 6.5}
 
 
+def test_replay_with_dead_stones():
+    moves = [[2, 0], [3, 0], [2, 1], [3, 1], [2, 2], [3, 2], [2, 3], [3, 3], [2, 4], [3, 4], [0, 2], [0, 0], None, None]
+    r = client.post("/api/replay", json={"size": 5, "moves": moves, "dead": [[0, 0]]}).json()
+    assert r["dead_results"] == [True] and r["final"]["dead"] == [[0, 0]]
+    assert r["final"]["score"] == {"1": 10.0, "2": 11.5}
+
+
 def test_replay_rejects_bad_input():
     assert client.post("/api/replay", json={"size": 1, "moves": []}).status_code == 422
     assert client.post("/api/replay", json={"size": 9, "moves": [[1, 2, 3]]}).status_code == 400

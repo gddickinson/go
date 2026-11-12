@@ -14,7 +14,7 @@ route('play', (args, query) => {
   const S = {
     size: SIZES.includes(+query.size) ? +query.size : 9, mode: query.mode === 'two' ? 'two' : 'ai',
     seed: Number.isInteger(+query.seed) && query.seed !== undefined ? Math.abs(+query.seed) : 1,
-    game: null, ai: null, moves: [], last: null, cursor: null, msg: '', showTerr: false, timer: 0,
+    game: null, ai: null, moves: [], deadClicks: [], last: null, cursor: null, msg: '', showTerr: false, timer: 0,
   };
 
   app().innerHTML = `
@@ -22,7 +22,7 @@ route('play', (args, query) => {
   <h1>Go against SimpleGoAI</h1>
   <div class="play">
     <div class="view"><div class="board-wrap" id="bw" tabindex="0" aria-label="Go board: arrow keys move the cursor, Enter places a stone, P passes"></div>
-      <p class="hint">Click an intersection to place a stone. Keyboard: focus the board, arrows to move, Enter to play, P to pass.</p></div>
+      <p class="hint">Click an intersection to place a stone; after two passes, click groups to mark them dead. Keyboard: focus the board, arrows to move, Enter to play, P to pass.</p></div>
     <div class="panel controls">
       <label>Board size</label>
       <div class="seg" id="sizes" role="group" aria-label="Board size">${SIZES.map(n => `<button data-n="${n}">${n}×${n}</button>`).join('')}</div>
@@ -47,7 +47,7 @@ route('play', (args, query) => {
     clearTimeout(S.timer);
     S.game = new GoGame(S.size);
     S.ai = new SimpleGoAI(S.game, 2, new PyRandom(S.seed));
-    S.moves = []; S.last = null; S.msg = ''; S.cursor = null;
+    S.moves = []; S.deadClicks = []; S.last = null; S.msg = ''; S.cursor = null;
     draw();
   }
 
@@ -58,7 +58,12 @@ route('play', (args, query) => {
   }
 
   function play(move) {
-    if (S.game.gameOver || busy()) return;
+    if (S.game.gameOver) {
+      // End-of-game phase: clicking a group marks it dead (or alive again) before scoring.
+      if (move && S.game.toggleDead(move[0], move[1])) { S.deadClicks.push(move); S.msg = ''; draw(); }
+      return;
+    }
+    if (busy()) return;
     const who = S.game.currentPlayer;
     if (move && !S.game.isValidMove(move[0], move[1])) {
       const [x, y] = move, g = S.game;
@@ -84,10 +89,15 @@ route('play', (args, query) => {
   function draw() {
     const g = S.game, n = S.size;
     const terr = (S.showTerr || g.gameOver) ? g.territoryMap().owner : null;
-    bw.innerHTML = boardSvg(n, g.board, { last: S.last, ko: g.koPoint, owner: terr, cursor: S.cursor });
+    bw.innerHTML = boardSvg(n, g.board, { last: S.last, ko: g.koPoint, owner: terr, dead: g.deadStones, cursor: S.cursor });
     const [b, w] = g.getScore();
     let status;
-    if (g.gameOver) status = `<b>Game over.</b> Black ${b}, White ${w}: <b class="ok">${b > w ? 'Black' : 'White'} wins by ${Math.abs(w - b)}</b>.`;
+    if (g.gameOver) {
+      status = `<b>Game over.</b> Black ${b}, White ${w}: <b class="ok">${b > w ? 'Black' : 'White'} wins by ${Math.abs(w - b)}</b>
+        <br><span class="small">Territory scoring (territory + prisoners, 6.5 komi). Click a group to mark it dead (click
+        again to revive): it is taken off and counted as the opponent's prisoners and territory.
+        ${g.deadStones.size ? `${g.deadStones.size} stone${g.deadStones.size > 1 ? 's' : ''} marked dead.` : ''}</span>`;
+    }
     else status = `<span class="dot ${g.currentPlayer === 1 ? 'b' : 'w'}"></span> ${NAME[g.currentPlayer]} to play${busy() ? ' (AI thinking)' : ''}.`;
     $('#status').innerHTML = status + (S.msg ? `<br><span class="warnc">${esc(S.msg)}</span>` : '');
     const t = g.countTerritory();
@@ -128,10 +138,10 @@ route('play', (args, query) => {
     const out = $('#pyres');
     out.textContent = 'Replaying through go_game.GoGame...';
     try {
-      const r = await api('/replay', { body: { size: S.size, moves: S.moves } });
+      const r = await api('/replay', { body: { size: S.size, moves: S.moves, dead: S.deadClicks } });
       const g = S.game, f = r.final, [b, w] = g.getScore();
       const okAll = f.board === g.encode() && r.results.every(Boolean) && f.score['1'] === b && f.score['2'] === w
-        && f.current_player === g.currentPlayer && JSON.stringify(f.ko_point) === JSON.stringify(g.koPoint);
+        && r.dead_results.every(Boolean) && f.dead.length === g.deadStones.size && f.current_player === g.currentPlayer && JSON.stringify(f.ko_point) === JSON.stringify(g.koPoint);
       out.innerHTML = okAll
         ? `<span class="ok">Python agrees:</span> same board, ko point, player to move and score (${f.score['1']} to ${f.score['2']}) after ${S.moves.length} moves.`
         : `<span class="err">Mismatch with Python</span> (Python score ${f.score['1']} to ${f.score['2']}).`;

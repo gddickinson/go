@@ -52,16 +52,20 @@ def demo():
 class Replay(BaseModel):
     size: int = Field(19, ge=2, le=25)
     moves: List[Optional[List[int]]] = Field(default_factory=list)
+    dead: List[List[int]] = Field(default_factory=list)
 
 
 @app.post("/api/replay")
 def replay_moves(req: Replay):
-    """Play a move list ([x, y] or null for a pass) through go_game.GoGame; returns each move's result and the final state."""
+    """Play a move list ([x, y] or null for a pass) through go_game.GoGame, then toggle dead groups at the `dead`
+    points; returns each move's and toggle's result and the final state (score with dead stones removed)."""
     if len(req.moves) > MAX_REPLAY_MOVES:
         raise HTTPException(400, f"at most {MAX_REPLAY_MOVES} moves")
     if any(m is not None and len(m) != 2 for m in req.moves):
         raise HTTPException(400, "each move must be [x, y] or null")
-    return replay(req.size, req.moves)
+    if len(req.dead) > MAX_REPLAY_MOVES or any(len(p) != 2 for p in req.dead):
+        raise HTTPException(400, "dead must be a list of [x, y] points")
+    return replay(req.size, req.moves, dead=req.dead)
 
 
 # GET paths (without the /api prefix) written to the static site as api/<path>.json.
