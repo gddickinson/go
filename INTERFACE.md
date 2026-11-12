@@ -18,7 +18,6 @@
 | `scripts/make_engine_fixtures.py` | Records Python move sequences to `tests/fixtures/go_engine_fixtures.json` |
 | `scripts/screenshots.py` | Playwright smoke test + README screenshots (`docs/img/`) |
 | `.github/workflows/pages.yml` | Builds and publishes the static site on push to main |
-| `go-web/` | Older standalone browser version (independent of the Python code) |
 
 ## Key Classes and Functions
 

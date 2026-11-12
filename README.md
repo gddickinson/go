@@ -96,7 +96,12 @@ python -m pytest -q                    # game, rule-regression, packaging and we
 python scripts/make_engine_fixtures.py # regenerate the Python-recorded fixtures after changing the rules
 ```
 
-The repo also contains `go-web/`, an earlier standalone browser version that is independent of the Python code.
+### History
+
+An earlier standalone browser version lived in `go-web/` (a single-page HTML/JS game written separately from the
+Python code). It had its own rule bugs (its AI could play suicide moves, its ko banned any one-stone retake, and it
+had no scoring), so it was removed in November 2026 in favour of `web/`, which is tested against the Python engine.
+It remains in the git history (commit 3ad92cb).
 
 ## AI Implementation
 
