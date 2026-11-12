@@ -51,7 +51,8 @@ python go_main.py
 
 - **Place a stone**: Click on an intersection on the board
 - **Pass your turn**: Click the "Pass" button
-- **End the game**: Both players pass consecutively
+- **End the game**: Both players pass consecutively (the AI passes when it has nothing left but its own eyes)
+- **Mark dead stones**: After the game, click a group to mark it dead (click again to revive); the score updates
 
 ## Project Structure
 
@@ -70,7 +71,7 @@ This implementation follows standard Go rules:
 4. The Ko rule prevents immediate recapture of a single stone (a pass lifts the ban)
 5. Suicide (a move that leaves your own group with no liberties without capturing) is not allowed
 6. The game ends when both players pass consecutively
-7. Territory is counted based on surrounded empty intersections, plus prisoners (dead stones are not removed automatically)
+7. Scoring is territory scoring (as in Japanese rules): empty intersections surrounded by one colour, plus prisoners. Groups the players mark dead after the game are removed and count as prisoners, and their points as territory
 8. White receives a 6.5 point komi (compensation for black's first-move advantage)
 
 ## Web version
@@ -81,7 +82,7 @@ seeded AI picks the same moves), and a node test replays move sequences recorded
 random legal and illegal attempts, seeded AI games on 5x5 to 19x19) and requires identical results.
 
 Pages: **Play** (9x9, 13x13 or 19x19 against the AI as White, or two players; pass, ko and suicide feedback, live
-prisoners/territory/score, keyboard play), **Watch** (a seeded AI-vs-AI game recorded by Python), **Rules** (the
+prisoners/territory/score, dead-stone marking after the game, keyboard play), **Watch** (a seeded AI-vs-AI game recorded by Python), **Rules** (the
 rules as the code implements them, with example positions) and **About**.
 
 | Home | Play | Watch | Rules |

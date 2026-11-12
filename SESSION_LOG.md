@@ -22,3 +22,14 @@ and requires identical results (5179 checks). Local app adds "Check with Python"
 **Open:** the random AI never passes while it has a legal move, so games against it end only when it runs out of
 moves (same in the desktop app). No undo, resign or SGF (the Python has none). `go-web/` (older standalone JS version)
 left untouched.
+
+## 2026-11-11 (later) -- follow-up fixes requested by George (branch `web-interface`, after merge to main)
+
+- **AI never passed** (games against it never ended): `GoGame.is_eye()` (all orthogonal neighbours own, at most one
+  opponent diagonal, none at the edge); `SimpleGoAI` skips own eyes and passes when nothing else is left. AI games now
+  end by two passes (9x9 about 120 moves). JS port identical; fixtures now hold complete seeded AI games 5x5-19x19.
+- **Dead stones were never removed before scoring**: after two passes players click groups to mark them dead
+  (`toggle_dead`); scoring stays territory scoring (territory + prisoners, 6.5 komi) with dead stones counted as the
+  opponent's prisoners and their points as territory. Desktop GUI (faded stones with a red cross) and web Play page.
+- **Removed `go-web/`**, the older standalone JS version with its own rule bugs (nothing referenced it); README History.
+- Node test: 7216/7216 checks (21 sequences incl. dead marking, 6 complete AI games); pytest 39 passed.
