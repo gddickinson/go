@@ -46,7 +46,8 @@ route('rules', async () => {
   </ol>
   <div class="grid exs">${boards}</div>
   <h2>The AI</h2>
-  <p>${esc(info.ai)}: it lists every legal point row by row and picks one with Python's <code>random.choice</code>; it passes
-  only when no legal move remains. The browser uses a port of Python's Mersenne Twister, so with the same seed it picks the
+  <p>${esc(info.ai)}. It lists every legal point row by row, leaves out its own eyes (an empty point whose four neighbours
+  are its stones, with at most one opponent stone on the diagonals, none at the edge), and picks one with Python's
+  <code>random.choice</code>; with nothing left it passes. The browser uses a port of Python's Mersenne Twister, so with the same seed it picks the
   same moves as <code>SimpleGoAI(game, 2, rng=random.Random(seed))</code>.</p>`;
 });

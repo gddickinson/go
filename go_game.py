@@ -63,6 +63,18 @@ class GoGame:
                 return False  # captures the neighbouring group, freeing a liberty
         return True
 
+    def is_eye(self, x: int, y: int, player: int) -> bool:
+        """Simple eye test used by the AI: (x, y) is empty, every orthogonal neighbour is `player`'s stone, and the
+        opponent holds at most one diagonal point (none if the point is on the edge or in a corner)."""
+        if self.board[y, x] != 0:
+            return False
+        if any(self.board[ny, nx] != player for nx, ny in self.get_neighbors(x, y)):
+            return False
+        diagonals = [(x + dx, y + dy) for dx, dy in ((-1, -1), (1, -1), (-1, 1), (1, 1))]
+        on_board = [(a, b) for a, b in diagonals if 0 <= a < self.board_size and 0 <= b < self.board_size]
+        enemy = sum(1 for a, b in on_board if self.board[b, a] == 3 - player)
+        return enemy == 0 if len(on_board) < 4 else enemy < 2
+
     def get_liberties(self, x: int, y: int) -> Set[Tuple[int, int]]:
         """Empty points adjacent to the group containing the stone at (x, y)."""
         liberties = set()

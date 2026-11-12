@@ -63,6 +63,21 @@ export class GoGame {
     return true;
   }
 
+  // Simple eye test used by the AI (go_game.py is_eye): empty, all orthogonal neighbours are player's stones, and the
+  // opponent holds at most one diagonal (none on the edge or in a corner).
+  isEye(x, y, player) {
+    if (this.at(x, y) !== 0) return false;
+    if (this.getNeighbors(x, y).some(([nx, ny]) => this.at(nx, ny) !== player)) return false;
+    let on = 0, enemy = 0;
+    for (const [dx, dy] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) {
+      const a = x + dx, b = y + dy;
+      if (a < 0 || a >= this.boardSize || b < 0 || b >= this.boardSize) continue;
+      on++;
+      if (this.at(a, b) === 3 - player) enemy++;
+    }
+    return on < 4 ? enemy === 0 : enemy < 2;
+  }
+
   getLiberties(x, y) {
     const liberties = new Set();
     for (const k of this.getConnectedStones(x, y)) {

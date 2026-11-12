@@ -72,6 +72,14 @@ const g = new GoGame(9);
 ok(g.getScore()[1] === 6.5 && g.countTerritory()[0] === 81, 'empty board: all neutral, komi 6.5');
 ok(!g.isValidMove(9, 0) && !g.isValidMove(0, -1) && !g.isValidMove(1.5, 0), 'off-board / non-integer moves refused');
 
+const e = new GoGame(5);
+e.set(1, 0, 1); e.set(0, 1, 1);
+ok(e.isEye(0, 0, 1) && !e.isEye(0, 0, 2), 'corner eye');
+e.set(1, 1, 2);
+ok(!e.isEye(0, 0, 1), 'corner with an opponent diagonal is a false eye');
+const full = new GoGame(5); full.board.fill(1); full.set(0, 0, 0); full.set(4, 4, 0);
+ok(new SimpleGoAI(full, 1, new PyRandom(0)).makeMove() === null, 'AI passes instead of filling its own eyes');
+
 console.log(`${checks - fails}/${checks} checks passed (${fx.cases.length} recorded sequences, ${steps} moves; ` +
   `${fx.ai_games.length} seeded AI games, ${aiMoves} AI moves; ${fx.prng.length} PRNG seeds)`);
 process.exit(fails ? 1 : 0);

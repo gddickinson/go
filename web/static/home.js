@@ -23,7 +23,7 @@ route('home', async () => {
     <div class="tile"><b>${info.board_sizes.length}</b><span>board sizes: ${info.board_sizes.join(', ')}</span></div>
     <div class="tile"><b>${info.komi}</b><span>komi for White</span></div>
     <div class="tile"><b>${info.modules.length}</b><span>Python modules</span></div>
-    <div class="tile"><b>1</b><span>AI: random legal move</span></div>
+    <div class="tile"><b>${demo.moves.length}</b><span>moves in the demo AI game</span></div>
   </div>
   <div class="grid">
     <a class="card" href="#/play"><b>Play</b><small>9×9, 13×13 or 19×19, against SimpleGoAI or a friend</small><span>Pass, ko and suicide checks, live count of prisoners and territory.</span></a>

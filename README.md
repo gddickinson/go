@@ -100,7 +100,7 @@ The repo also contains `go-web/`, an earlier standalone browser version that is 
 
 ## AI Implementation
 
-The current AI implementation (`SimpleGoAI` class) makes random valid (legal) moves; pass it `rng=random.Random(seed)` for a reproducible game. It never passes while it has a legal move, so a game against it ends only when it runs out of moves. This provides a basic opponent but isn't very challenging. Future improvements could include more sophisticated algorithms like Monte Carlo Tree Search.
+The current AI implementation (`SimpleGoAI` class) makes random valid (legal) moves, except that it never fills one of its own eyes (`GoGame.is_eye`: all four neighbours its own stones, at most one opponent diagonal, none on the edge); when no other move is left it passes, so games end with two passes. Pass it `rng=random.Random(seed)` for a reproducible game. This provides a basic opponent but isn't very challenging. Future improvements could include more sophisticated algorithms like Monte Carlo Tree Search.
 
 ## Future Enhancements
 

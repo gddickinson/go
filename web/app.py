@@ -16,7 +16,7 @@ from pydantic import BaseModel, Field
 from web.go_record import BOARD_SIZES, KOMI, ai_game, replay
 
 STATIC = Path(__file__).resolve().parent / "static"
-DEMO = {"size": 9, "seed": 1, "max_moves": 160}
+DEMO = {"size": 9, "seed": 1, "max_moves": 1000}  # the game ends by two passes long before the cap
 MAX_REPLAY_MOVES = 2000
 
 app = FastAPI(title="Go Game")
@@ -37,7 +37,7 @@ def info():
         "desktop_board_size": 19,
         "komi": KOMI,
         "scoring": "territory + prisoners",
-        "ai": "SimpleGoAI: a uniformly random legal move",
+        "ai": "SimpleGoAI: a uniformly random legal move that does not fill its own eye; passes when none is left",
         "ai_color": 2,
         "modules": ["go_game.py", "go_ai.py", "go_gui.py", "go_main.py"],
     }
@@ -45,7 +45,7 @@ def info():
 
 @app.get("/api/demo")
 def demo():
-    """A seeded SimpleGoAI-vs-SimpleGoAI game recorded by the Python engine (first DEMO['max_moves'] moves)."""
+    """A seeded SimpleGoAI-vs-SimpleGoAI game recorded by the Python engine (played to the end)."""
     return ai_game(DEMO["size"], DEMO["seed"], DEMO["max_moves"])
 
 

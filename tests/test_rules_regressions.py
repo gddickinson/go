@@ -130,3 +130,43 @@ def test_pass_after_game_over_is_ignored():
     player = game.current_player
     game.pass_turn()
     assert game.game_over is True and game.passes == 2 and game.current_player == player
+
+
+# --- AI passing (eye rule) ------------------------------------------------------------------------------------------
+def test_is_eye():
+    game = GoGame(5)
+    game.board[0, 1] = game.board[1, 0] = 1            # corner (0,0) surrounded by black
+    assert game.is_eye(0, 0, 1) and not game.is_eye(0, 0, 2)
+    game.board[1, 1] = 2                                # opponent on the only diagonal of a corner: false eye
+    assert not game.is_eye(0, 0, 1)
+    g2 = GoGame(5)
+    for x, y in [(1, 2), (3, 2), (2, 1), (2, 3)]:
+        g2.board[y, x] = 1
+    g2.board[1, 1] = 2                                  # one opponent diagonal in the centre is still an eye
+    assert g2.is_eye(2, 2, 1)
+    g2.board[3, 3] = 2                                  # two are not
+    assert not g2.is_eye(2, 2, 1)
+
+
+def test_ai_does_not_fill_own_eye_and_passes():
+    """Black owns the board except two separate one-point eyes: the AI must pass rather than fill them."""
+    game = GoGame(5)
+    for y in range(5):
+        for x in range(5):
+            game.board[y, x] = 1
+    game.board[0, 0] = game.board[4, 4] = 0
+    assert game.is_valid_move(0, 0)                     # filling it is legal, just pointless
+    assert SimpleGoAI(game, 1, rng=random.Random(0)).make_move() is None
+
+
+def test_ai_vs_ai_games_end_with_two_passes():
+    for seed in range(5):
+        game = GoGame(9)
+        rng = random.Random(seed)
+        ais = {1: SimpleGoAI(game, 1, rng=rng), 2: SimpleGoAI(game, 2, rng=rng)}
+        for _ in range(2000):
+            if game.game_over:
+                break
+            move = ais[game.current_player].make_move()
+            game.pass_turn() if move is None else game.place_stone(*move)
+        assert game.game_over, f"seed {seed}: game did not end"

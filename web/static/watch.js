@@ -16,7 +16,7 @@ route('watch', async () => {
   app().innerHTML = `
   <p class="kicker">Watch</p>
   <h1>SimpleGoAI against itself</h1>
-  <p class="lead">The first ${d.moves.length} moves of a ${n}×${n} game between two random-move AIs, recorded by the Python code
+  <p class="lead">A complete ${n}×${n} game (${d.moves.length} moves, ending with two passes) between two random-move AIs, recorded by the Python code
   (<code>SimpleGoAI(game, colour, rng=random.Random(${d.seed}))</code> for both players, sharing one generator).
   ${agree ? '<span class="ok">The browser engine replays it to exactly the same final position and score.</span>'
     : '<span class="err">The browser engine does not reach the Python position.</span>'}</p>
@@ -27,9 +27,9 @@ route('watch', async () => {
       <input id="mv" type="range" min="0" max="${d.moves.length}" value="0">
       <div class="bar"><button id="back" class="alt" aria-label="Previous move">◀</button><button id="run">Play</button><button id="fwd" class="alt" aria-label="Next move">▶</button></div>
       <div class="readout" id="readout"></div>
-      <p class="hint">Random play never passes while it has a legal move and does not protect its own eyes, so games like this
-      go on far past where people would stop (prisoners pile up); the desktop app's AI behaves the same way.</p>
-      <h3>Python's count at move ${d.moves.length}</h3>
+      <p class="hint">Each AI plays a random legal move that does not fill one of its own eyes and passes when no such move
+      is left; two passes in a row end the game.</p>
+      <h3>Python's count at the end</h3>
       <p class="small">Black ${d.final.score['1']} · White ${d.final.score['2']} (prisoners ${d.final.captured['1']} / ${d.final.captured['2']},
       territory ${d.final.territory['1']} / ${d.final.territory['2']}, komi 6.5)</p>
     </div>

@@ -16,8 +16,8 @@ route('about', () => {
   <div class="callout">While building this site, four bugs in the Python were fixed: the ko rule was never enforced,
   multi-stone suicide was allowed (one-stone suicide was not), the AI could pick a suicide point (stalling the desktop game),
   and <code>pyproject.toml</code> named a build backend that does not exist. See the README and SESSION_LOG.md.</div>
-  <p>The AI never passes while it has a legal move, so against it a game only ends when the AI runs out of moves; the score
-  panel shows the count as it would be made at any moment. Two-player mode lets two people finish a game with two passes.</p>
+  <p>The AI plays a random legal move that does not fill its own eye and passes when none is left, so when you pass
+  after it does, the game ends and is scored.</p>
 
   <h2>Run the desktop app</h2>
   <pre>pip install -r requirements.txt     # PyQt5, numpy

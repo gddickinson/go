@@ -64,7 +64,7 @@ def test_demo_is_a_python_ai_game():
     from web.go_record import ai_game
     d = client.get("/api/demo").json()
     assert d == ai_game(DEMO["size"], DEMO["seed"], DEMO["max_moves"])
-    assert len(d["moves"]) == DEMO["max_moves"]
+    assert d["final"]["game_over"] and d["moves"][-2:] == [None, None] and len(d["moves"]) < DEMO["max_moves"]
 
 
 def test_replay_ko_and_suicide():
